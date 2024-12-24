@@ -1,5 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table'
 import { DataTable } from '@/components/data-table/data-table'
+import { Payment, paymentStatuses, paymentTypes } from '@/constants/payment'
 
 const data: Payment[] = [
   {
@@ -404,19 +405,12 @@ const data: Payment[] = [
   },
 ]
 
-type Payment = {
-  id: string
-  type: string
-  value: number
-  paid_at: string
-  status: 'pending' | 'processing' | 'success' | 'failed'
-  description: string | null
-}
-
 const columns: ColumnDef<Payment>[] = [
   {
     accessorKey: 'type',
     header: 'Type',
+    enableColumnFilter: true,
+    filterFn: 'includesString',
   },
   {
     accessorKey: 'value',
@@ -434,6 +428,8 @@ const columns: ColumnDef<Payment>[] = [
   {
     accessorKey: 'status',
     header: 'Status',
+    enableColumnFilter: true,
+    filterFn: 'includesString',
   },
   {
     accessorKey: 'description',
@@ -448,24 +444,14 @@ const PaymentPage = () => {
         data={data}
         filterableColumns={[
           {
-            id: 'status',
-            title: 'Status',
-            options: [
-              { label: 'Pending', value: 'pending' },
-              { label: 'Processing', value: 'processing' },
-              { label: 'Success', value: 'success' },
-              { label: 'Failed', value: 'failed' },
-            ],
-          },
-        ]}
-        searchableColumns={[
-          {
             id: 'type',
             title: 'Type',
+            options: paymentTypes,
           },
           {
-            id: 'value',
-            title: 'Value',
+            id: 'status',
+            title: 'Status',
+            options: paymentStatuses,
           },
         ]}
       />

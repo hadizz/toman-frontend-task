@@ -1,6 +1,7 @@
 import { Table } from '@tanstack/react-table'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '../ui/input'
 import { DataTableFacetedFilter } from './data-table-faceted-filter'
 
 interface DataTableToolbarProps<TData> {
@@ -29,7 +30,7 @@ export function DataTableToolbar<TData>({
   return (
     <div className="flex items-center justify-between gap-2">
       <div className="flex flex-1 items-center space-x-2">
-        {/* {searchableColumns.length > 0 &&
+        {searchableColumns.length > 0 &&
           searchableColumns.map((column) => (
             <Input
               key={column.id}
@@ -41,14 +42,14 @@ export function DataTableToolbar<TData>({
               }}
               className="h-8 w-[150px] lg:w-[250px]"
             />
-          ))} */}
+          ))}
         {filterableColumns.length > 0 &&
-          filterableColumns.map((column) => (
+          filterableColumns.map(({ id, title, options }) => (
             <DataTableFacetedFilter
-              key={column.id}
-              column={table.getColumn(column.id)}
-              title={column.title}
-              options={column.options}
+              key={id}
+              column={table.getColumn(id)}
+              title={title}
+              options={options}
             />
           ))}
         {isFiltered && (
