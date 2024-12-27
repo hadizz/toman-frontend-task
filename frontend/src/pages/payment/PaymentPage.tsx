@@ -2,7 +2,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import { DataTable } from '@/components/data-table/data-table'
 import { Payment, paymentStatuses, paymentTypes } from '@/constants/payment'
 
-const data: Payment[] = [
+const data: any[] = [
   {
     id: 'p1',
     type: 'salary',
