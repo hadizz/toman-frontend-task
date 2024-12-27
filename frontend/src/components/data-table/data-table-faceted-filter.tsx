@@ -1,4 +1,4 @@
-import { Column } from '@tanstack/react-table'
+import { Table } from '@tanstack/react-table'
 import { Check, PlusCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -15,25 +15,32 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 
-interface DataTableFacetedFilterProps<TData, TValue> {
-  column?: Column<TData, TValue>
+interface DataTableFacetedFilterProps<TData> {
+  columnKey: string
   title?: string
   options: {
     label: string
     value: string
   }[]
+  paramName: string
+  table: Table<TData>
 }
 
-export function DataTableFacetedFilter<TData, TValue>({
-  column,
+export function DataTableFacetedFilter<TData>({
+  columnKey,
   title,
   options,
-}: DataTableFacetedFilterProps<TData, TValue>) {
+  paramName,
+  table,
+}: DataTableFacetedFilterProps<TData>) {
+  const column = table.getColumn(columnKey)
+  const currentValues =
+    (table.getState().columnFilters.find((f) => f.id === paramName)?.value as string[]) || []
+  const selectedValues = new Set(currentValues)
+
   if (!column) {
     return null
   }
-
-  const selectedValues = new Set(column?.getFilterValue() as string[])
 
   return (
     <Popover>
@@ -47,25 +54,6 @@ export function DataTableFacetedFilter<TData, TValue>({
               <Badge variant="secondary" className="rounded-sm px-1 font-normal lg:hidden">
                 {selectedValues.size}
               </Badge>
-              <div className="hidden space-x-1 lg:flex">
-                {selectedValues.size > 2 ? (
-                  <Badge variant="secondary" className="rounded-sm px-1 font-normal">
-                    {selectedValues.size} selected
-                  </Badge>
-                ) : (
-                  options
-                    .filter((option) => selectedValues.has(option.value))
-                    .map((option) => (
-                      <Badge
-                        variant="secondary"
-                        key={option.value}
-                        className="rounded-sm px-1 font-normal"
-                      >
-                        {option.label}
-                      </Badge>
-                    ))
-                )}
-              </div>
             </>
           )}
         </Button>
@@ -82,13 +70,13 @@ export function DataTableFacetedFilter<TData, TValue>({
                   <CommandItem
                     key={option.value}
                     onSelect={() => {
+                      const newValues = new Set(selectedValues)
                       if (isSelected) {
-                        selectedValues.delete(option.value)
+                        newValues.delete(option.value)
                       } else {
-                        selectedValues.add(option.value)
+                        newValues.add(option.value)
                       }
-                      const filterValues = Array.from(selectedValues)
-                      column?.setFilterValue(filterValues.length ? filterValues : undefined)
+                      column.setFilterValue(Array.from(newValues))
                     }}
                   >
                     <div
@@ -111,7 +99,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                 <CommandSeparator />
                 <CommandGroup>
                   <CommandItem
-                    onSelect={() => column?.setFilterValue(undefined)}
+                    onSelect={() => column.setFilterValue(undefined)}
                     className="justify-center text-center"
                   >
                     Clear filters

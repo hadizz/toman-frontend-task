@@ -410,7 +410,7 @@ const columns: ColumnDef<Payment>[] = [
     accessorKey: 'type',
     header: 'Type',
     enableColumnFilter: true,
-    filterFn: 'includesString',
+    filterFn: 'arrIncludesSome',
   },
   {
     accessorKey: 'value',
@@ -429,7 +429,7 @@ const columns: ColumnDef<Payment>[] = [
     accessorKey: 'status',
     header: 'Status',
     enableColumnFilter: true,
-    filterFn: 'includesString',
+    filterFn: 'arrIncludesSome',
   },
   {
     accessorKey: 'description',

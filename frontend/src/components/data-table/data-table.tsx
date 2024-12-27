@@ -1,4 +1,4 @@
-import * as React from 'react'
+import { useEffect, useState } from 'react'
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -9,9 +9,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  SortingState,
   useReactTable,
-  VisibilityState,
 } from '@tanstack/react-table'
 import {
   Table,
@@ -21,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import useColumnFilterSearchParams from '@/hooks/useUrlParams'
 import { DataTablePagination } from './data-table-pagination'
 import { DataTableToolbar } from './data-table-toolbar'
 
@@ -47,25 +46,76 @@ export function DataTable<TData, TValue>({
   filterableColumns = [],
   searchableColumns = [],
 }: DataTableProps<TData, TValue>) {
-  const [rowSelection, setRowSelection] = React.useState({})
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  console.log('render table')
+  const { getParamValues, setParam, searchParams, setSearchParams } = useColumnFilterSearchParams()
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  })
+
+  useEffect(() => {
+    console.log('--------------------------------component mounted')
+
+    // Filters
+    const initialFilters = filterableColumns
+      .map(({ id }) => {
+        const urlValues = getParamValues(id)
+        return urlValues.length > 0
+          ? {
+              id,
+              value: urlValues,
+            }
+          : null
+      })
+      .filter(Boolean) as ColumnFiltersState
+
+    if (initialFilters.length > 0) {
+      setColumnFilters(initialFilters)
+    }
+
+    // Pagination
+    const pageIndexParam = searchParams.get('pageIndex')
+    const pageSizeParam = searchParams.get('pageSize')
+    console.log('pageIndexParam', pageIndexParam)
+    console.log('pageSizeParam', pageSizeParam)
+
+    if (pageIndexParam && pageSizeParam) {
+      setPagination({
+        pageIndex: parseInt(pageIndexParam, 10),
+        pageSize: parseInt(pageSizeParam, 10),
+      })
+    } else {
+      searchParams.set('pageIndex', pagination.pageIndex.toString())
+      searchParams.set('pageSize', pagination.pageSize.toString())
+      setSearchParams(searchParams)
+    }
+    // I didnt have search filters in the url params, so I dont code it now :_)
+  }, [])
 
   const table = useReactTable({
     data,
     columns,
     state: {
-      sorting,
-      columnVisibility,
-      rowSelection,
       columnFilters,
+      pagination,
     },
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
+    onColumnFiltersChange: (updater) => {
+      const changedFilters = typeof updater === 'function' ? updater(columnFilters) : updater
+      setColumnFilters(changedFilters)
+      changedFilters.map((filterColumn) => {
+        setParam(filterColumn.id, filterColumn.value as any)
+      })
+    },
+    onPaginationChange: (updater) => {
+      const newPagination = typeof updater === 'function' ? updater(pagination) : updater
+      console.log('newPagination', newPagination)
+
+      setPagination(newPagination)
+      searchParams.set('pageIndex', newPagination.pageIndex.toString())
+      searchParams.set('pageSize', newPagination.pageSize.toString())
+      setSearchParams(searchParams)
+    },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -76,7 +126,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="flex w-full flex-col gap-4">
-      <DataTableToolbar
+      <DataTableToolbar<TData>
         table={table}
         filterableColumns={filterableColumns}
         searchableColumns={searchableColumns}
