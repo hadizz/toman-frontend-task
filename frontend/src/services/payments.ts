@@ -14,8 +14,8 @@ export const paymentsService = {
     search,
     type,
     status,
-    page = 0,
-    limit = 10,
+    page,
+    limit,
   }: FetchPaymentsParams): Promise<PaymentsResponse> => {
     const params = new URLSearchParams()
 

@@ -44,8 +44,8 @@ export function DataTableToolbar<TData>({
   }
 
   return (
-    <div className="flex items-center justify-between gap-2">
-      <div className="flex flex-1 items-center space-x-2">
+    <div className="flex flex-col items-center justify-between gap-2 sm:flex-row">
+      <div className="flex flex-1 flex-col items-center space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0">
         {searchableColumns.length > 0 &&
           searchableColumns.map((column) => (
             <Input
@@ -58,7 +58,7 @@ export function DataTableToolbar<TData>({
                 debouncedSearch(column.id, newValue)
               }}
               disabled={loading}
-              className="h-8 w-[150px] lg:w-[250px]"
+              className="h-8 w-full sm:w-[200px] lg:w-[250px]"
             />
           ))}
         {filterableColumns.length > 0 &&

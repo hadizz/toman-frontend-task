@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -47,8 +46,6 @@ interface DataTableProps<TData, TValue> {
   }[]
 }
 
-const defaultPagination = { pageIndex: 0, pageSize: 10 }
-
 export function DataTable<TData, TValue>({
   loading,
   columns,
@@ -61,30 +58,23 @@ export function DataTable<TData, TValue>({
   filterableColumns = [],
   searchableColumns = [],
 }: DataTableProps<TData, TValue>) {
-  const dataToRender = useMemo(
-    () => (loading ? Array(pagination.pageSize ?? defaultPagination.pageSize).fill({}) : data),
-    [loading, data, pagination.pageSize]
-  )
-  const columnsToRender = useMemo(
-    () =>
-      loading
-        ? columns.map((column) => ({
-            ...column,
-            cell: () => <Skeleton className="h-4 w-full" />,
-          }))
-        : columns,
-    [loading, columns]
-  )
-
   const table = useReactTable({
-    data: dataToRender,
-    columns: columnsToRender,
+    data: loading ? Array(pagination.pageSize).fill({}) : data,
+    columns: loading
+      ? columns.map((column) => ({
+          ...column,
+          cell: () => <Skeleton className="h-4 w-full" />,
+          enableColumnFilter: false,
+          enableGlobalFilter: false,
+        }))
+      : columns,
     pageCount,
     state: {
       columnFilters,
       pagination,
     },
     manualPagination: true,
+    manualFiltering: true,
     onColumnFiltersChange,
     onPaginationChange,
     getCoreRowModel: getCoreRowModel(),
@@ -120,7 +110,7 @@ export function DataTable<TData, TValue>({
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows?.length ? (
+              {loading || table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow key={row.id}>
                     {row.getVisibleCells().map((cell) => (

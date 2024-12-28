@@ -4,14 +4,13 @@ import { DataTable } from '@/components/data-table/data-table'
 import { paymentStatuses, paymentTypes } from '@/constants/payment'
 import { usePayments } from '@/hooks/usePayments'
 import { useTableState } from '@/hooks/useTableState'
+import { useToast } from '@/providers/ToastProvider'
 import { Payment } from '@/types/payment.dto'
 
 const columns: ColumnDef<Payment>[] = [
   {
     accessorKey: 'type',
     header: 'Type',
-    enableColumnFilter: true,
-    filterFn: 'arrIncludesSome',
   },
   {
     accessorKey: 'value',
@@ -33,8 +32,6 @@ const columns: ColumnDef<Payment>[] = [
   {
     accessorKey: 'status',
     header: 'Status',
-    enableColumnFilter: true,
-    filterFn: 'arrIncludesSome',
   },
   {
     accessorKey: 'description',
@@ -59,13 +56,19 @@ const searchableColumns = [
     id: 'description',
     title: 'Search description',
   },
+  {
+    id: 'value',
+    title: 'Value',
+  },
 ]
 
 const PaymentPage = () => {
-  const { columnFilters, pagination, onColumnFiltersChange, onPaginationChange } = useTableState({
-    filterableColumns,
-    searchableColumns,
-  })
+  const { showToast } = useToast()
+  const { isMounted, columnFilters, pagination, onColumnFiltersChange, onPaginationChange } =
+    useTableState({
+      filterableColumns,
+      searchableColumns,
+    })
 
   const queryParams = useMemo(
     () => ({
@@ -78,7 +81,14 @@ const PaymentPage = () => {
     [columnFilters, pagination]
   )
 
-  const { data, isError, status, isFetching } = usePayments(queryParams)
+  const { data, isError, status, isFetching, error } = usePayments(isMounted ? queryParams : {}, {
+    retry: (retrycount, error) => {
+      console.log('retrycount', retrycount)
+      console.log('error', error)
+      showToast(`Error loading payments. Retrying...`, 'error')
+      return retrycount < 3
+    },
+  })
 
   const pageCount = useMemo(() => {
     if (!data?.total) return 0
@@ -95,14 +105,14 @@ const PaymentPage = () => {
   }, [status])
 
   if (isError) {
-    return <div>Error loading payments</div>
+    return <div>Error loading payments, {error?.message}</div>
   }
 
   return (
     <div className="flex flex-col gap-4">
       <h2>{`Payments ${data?.total ? `(${data.entities.length})` : ''}`}</h2>
       <DataTable
-        loading={isFetching}
+        loading={!isMounted || isFetching}
         columns={columns}
         data={data?.entities || []}
         columnFilters={columnFilters}

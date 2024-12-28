@@ -21,6 +21,7 @@ export function useTableState({
   filterableColumns = [],
   searchableColumns = [],
 }: UseTableStateProps = {}) {
+  const [isMounted, setIsMounted] = useState(false)
   const { getParamValues, setParam, searchParams, setSearchParams } = useColumnFilterSearchParams()
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [pagination, setPagination] = useState({
@@ -31,7 +32,7 @@ export function useTableState({
   // Initialize state from URL params
   useEffect(() => {
     // Filters
-    const initialFilters = filterableColumns
+    const initialFilters = [...filterableColumns, ...searchableColumns]
       .map(({ id }) => {
         const urlValues = getParamValues(id)
         return urlValues.length > 0
@@ -61,6 +62,7 @@ export function useTableState({
       searchParams.set('pageSize', pagination.pageSize.toString())
       setSearchParams(searchParams)
     }
+    setIsMounted(true)
   }, [])
 
   const getTypeOfFilter = useCallback(
@@ -98,6 +100,7 @@ export function useTableState({
   }
 
   return {
+    isMounted,
     columnFilters,
     pagination,
     onColumnFiltersChange,
