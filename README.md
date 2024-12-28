@@ -31,5 +31,5 @@ The backend will run on `http://localhost:8000`.
     pnpm dev
     ```
 
-The frontend will run on http://localhost:5173.
+The frontend will run on `http://localhost:5173`
 
