@@ -87,11 +87,13 @@ app.get('/payments', async (req, res) => {
     }
 
     if (type) {
-        filteredResults = filteredResults.filter(payment => payment.type === type);
+        const arr = type.split(',')        
+        filteredResults = filteredResults.filter(payment => arr.includes(payment.type));
     }
 
     if (status) {
-        filteredResults = filteredResults.filter(payment => payment.status === status);
+        const arr = status.split(',')        
+        filteredResults = filteredResults.filter(payment => arr.includes(payment.status));
     }
 
     const startIndex = (page - 1) * limit;
