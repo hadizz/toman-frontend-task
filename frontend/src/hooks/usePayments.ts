@@ -1,6 +1,6 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query'
 import { paymentsService } from '@/services/payments'
-import { PaymentsResponse } from '@/types/payment.dto'
+import { Payment, PaymentsResponse } from '@/types/payment.dto'
 
 interface UsePaymentsParams {
   type?: string[]
@@ -25,10 +25,17 @@ export function usePayments(
   })
 }
 
-export function usePayment(id: string) {
-  return useQuery({
+export function usePayment(
+  id: string,
+  options: Omit<
+    UseQueryOptions<Payment, Error>,
+    'queryKey' | 'queryFn' | 'placeholderData' | 'enabled'
+  > = {}
+) {
+  return useQuery<Payment>({
     queryKey: ['payment', id],
     queryFn: () => paymentsService.getPayment(id),
     enabled: !!id,
+    ...options,
   })
 }

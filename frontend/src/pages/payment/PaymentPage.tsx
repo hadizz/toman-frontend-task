@@ -1,43 +1,16 @@
 import { useEffect, useMemo } from 'react'
 import { ColumnDef } from '@tanstack/react-table'
+import { useNavigate } from 'react-router-dom'
 import { DataTable } from '@/components/data-table/data-table'
+import { PaymentStatusBadge } from '@/components/payment/PaymentStatusBadge'
+import { PaymentTypeBadge } from '@/components/payment/PaymentTypeBadge'
 import { paymentStatuses, paymentTypes } from '@/constants/payment'
 import { usePayments } from '@/hooks/usePayments'
 import { useTableState } from '@/hooks/useTableState'
+import { formatCurrency } from '@/lib/format'
 import { useToast } from '@/providers/ToastProvider'
 import { Payment } from '@/types/payment.dto'
 
-const columns: ColumnDef<Payment>[] = [
-  {
-    accessorKey: 'type',
-    header: 'Type',
-  },
-  {
-    accessorKey: 'value',
-    header: 'Value',
-  },
-  {
-    accessorKey: 'paid_at',
-    header: 'Paid At',
-    cell: ({ cell }) => {
-      const dateValue = cell.getValue<string>()
-      const date = new Date(dateValue)
-      if (isNaN(date.getTime())) {
-        return ''
-      }
-      const formattedDate = date.toISOString().split('T')[0].replace(/-/g, '/').slice(2)
-      return formattedDate
-    },
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-  },
-  {
-    accessorKey: 'description',
-    header: 'Description',
-  },
-]
 const filterableColumns = [
   {
     id: 'type',
@@ -63,12 +36,65 @@ const searchableColumns = [
 ]
 
 const PaymentPage = () => {
+  const navigate = useNavigate()
   const { showToast } = useToast()
   const { isMounted, columnFilters, pagination, onColumnFiltersChange, onPaginationChange } =
     useTableState({
       filterableColumns,
       searchableColumns,
     })
+
+  const columns: ColumnDef<Payment>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'type',
+        header: 'Type',
+        cell: ({ row }) => <PaymentTypeBadge type={row.getValue('type')} />,
+      },
+      {
+        accessorKey: 'value',
+        header: 'Value',
+        cell: ({ row }) => formatCurrency(row.getValue('value')),
+      },
+      {
+        accessorKey: 'paid_at',
+        header: 'Paid At',
+        cell: ({ cell }) => {
+          const dateValue = cell.getValue<string>()
+          const date = new Date(dateValue)
+          if (isNaN(date.getTime())) {
+            return ''
+          }
+          const formattedDate = date.toISOString().split('T')[0].replace(/-/g, '/').slice(2)
+          return formattedDate
+        },
+      },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => <PaymentStatusBadge status={row.getValue('status')} />,
+      },
+      {
+        accessorKey: 'description',
+        header: 'Description',
+      },
+      {
+        id: 'actions',
+        cell: ({ row }) => {
+          const payment = row.original
+          return (
+            <button
+              onClick={() => navigate(`/payments/${payment.id}`)}
+              className="text-sm text-muted-foreground hover:text-primary"
+            >
+              View Details
+            </button>
+          )
+        },
+      },
+    ],
+    [navigate]
+  )
 
   const queryParams = useMemo(
     () => ({

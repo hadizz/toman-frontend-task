@@ -1,8 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { ThemeProvider } from '@/providers/ThemeProvider'
 import { ToastProvider } from '@/providers/ToastProvider'
+import PaymentDetailPage from './pages/payment/PaymentDetailPage'
 import PaymentPage from './pages/payment/PaymentPage'
 import ErrorBoundary from './providers/ErrorBoundry'
 
@@ -16,7 +17,10 @@ function App() {
           <ToastProvider>
             <ErrorBoundary>
               <DashboardLayout>
-                <PaymentPage />
+                <Routes>
+                  <Route path="/" element={<PaymentPage />} />
+                  <Route path="/payments/:id" element={<PaymentDetailPage />} />
+                </Routes>
               </DashboardLayout>
             </ErrorBoundary>
           </ToastProvider>
