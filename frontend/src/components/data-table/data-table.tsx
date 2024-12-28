@@ -61,7 +61,6 @@ export function DataTable<TData, TValue>({
   filterableColumns = [],
   searchableColumns = [],
 }: DataTableProps<TData, TValue>) {
-  console.log('loading table', loading)
   const dataToRender = useMemo(
     () => (loading ? Array(pagination.pageSize ?? defaultPagination.pageSize).fill({}) : data),
     [loading, data, pagination.pageSize]

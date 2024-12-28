@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ColumnFiltersState } from '@tanstack/react-table'
 import useColumnFilterSearchParams from './useUrlParams'
 
@@ -11,9 +11,16 @@ interface UseTableStateProps {
       value: string
     }[]
   }[]
+  searchableColumns?: {
+    id: string
+    title: string
+  }[]
 }
 
-export function useTableState({ filterableColumns = [] }: UseTableStateProps = {}) {
+export function useTableState({
+  filterableColumns = [],
+  searchableColumns = [],
+}: UseTableStateProps = {}) {
   const { getParamValues, setParam, searchParams, setSearchParams } = useColumnFilterSearchParams()
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [pagination, setPagination] = useState({
@@ -56,11 +63,29 @@ export function useTableState({ filterableColumns = [] }: UseTableStateProps = {
     }
   }, [])
 
+  const getTypeOfFilter = useCallback(
+    (filter: any) => {
+      if (filterableColumns.find((column) => column.id === filter.id)) {
+        return 'filter'
+      }
+      if (searchableColumns.find((column) => column.id === filter.id)) {
+        return 'search'
+      }
+      return 'unknown'
+    },
+    [filterableColumns, searchableColumns]
+  )
+
   const onColumnFiltersChange = (updater: any) => {
     const changedFilters = typeof updater === 'function' ? updater(columnFilters) : updater
+
     setColumnFilters(changedFilters)
     changedFilters.map((filterColumn) => {
-      setParam(filterColumn.id, filterColumn.value as any)
+      if (getTypeOfFilter(filterColumn) === 'filter') {
+        setParam(filterColumn.id, filterColumn.value)
+      } else {
+        setParam(filterColumn.id, filterColumn.value, true)
+      }
     })
   }
 

@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { Table } from '@tanstack/react-table'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useDebouncedCallback } from '@/hooks/useDebounce'
 import { Input } from '../ui/input'
 import { DataTableFacetedFilter } from './data-table-faceted-filter'
 
@@ -28,8 +30,14 @@ export function DataTableToolbar<TData>({
   searchableColumns = [],
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0
+  const [searchValues, setSearchValues] = useState<Record<string, string>>({})
+
+  const debouncedSearch = useDebouncedCallback((id: string, value: string) => {
+    table.getColumn(id)?.setFilterValue(value)
+  }, 500)
 
   const handleReset = () => {
+    setSearchValues({})
     window.history.pushState({}, '', window.location.pathname)
     table.resetColumnFilters()
     table.setPagination({ pageIndex: 0, pageSize: 10 })
@@ -42,11 +50,14 @@ export function DataTableToolbar<TData>({
           searchableColumns.map((column) => (
             <Input
               key={column.id}
-              placeholder={`Filter ${column.title}...`}
-              value={(table.getColumn(column.id)?.getFilterValue() as string) ?? ''}
+              placeholder={`${column.title}...`}
+              value={searchValues[column.id] || ''}
               onChange={(event) => {
-                table.getColumn(column.id)?.setFilterValue(event.target.value)
+                const newValue = event.target.value
+                setSearchValues((prev) => ({ ...prev, [column.id]: newValue }))
+                debouncedSearch(column.id, newValue)
               }}
+              disabled={loading}
               className="h-8 w-[150px] lg:w-[250px]"
             />
           ))}

@@ -54,13 +54,22 @@ const filterableColumns = [
   },
 ]
 
+const searchableColumns = [
+  {
+    id: 'description',
+    title: 'Search description',
+  },
+]
+
 const PaymentPage = () => {
   const { columnFilters, pagination, onColumnFiltersChange, onPaginationChange } = useTableState({
     filterableColumns,
+    searchableColumns,
   })
 
   const queryParams = useMemo(
     () => ({
+      search: columnFilters.find((f) => f.id === 'description')?.value as string | undefined,
       type: columnFilters.find((f) => f.id === 'type')?.value as string[] | undefined,
       status: columnFilters.find((f) => f.id === 'status')?.value as string[] | undefined,
       page: pagination.pageIndex,
@@ -69,15 +78,13 @@ const PaymentPage = () => {
     [columnFilters, pagination]
   )
 
-  const { data, isError, status, isFetching, ...other } = usePayments(queryParams)
-  console.log({ data, isError, status, ...other })
+  const { data, isError, status, isFetching } = usePayments(queryParams)
 
   const pageCount = useMemo(() => {
     if (!data?.total) return 0
     return Math.ceil(data.total / data.limit)
   }, [data?.total, data?.limit])
 
-  // Update pagination based on response
   useEffect(() => {
     if (status === 'success') {
       onPaginationChange({
@@ -104,6 +111,7 @@ const PaymentPage = () => {
         onColumnFiltersChange={onColumnFiltersChange}
         onPaginationChange={onPaginationChange}
         filterableColumns={filterableColumns}
+        searchableColumns={searchableColumns}
       />
     </div>
   )

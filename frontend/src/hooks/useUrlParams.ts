@@ -8,9 +8,9 @@ const useColumnFilterSearchParams = () => {
     return values ? values.split(',') : []
   }
 
-  const setParam = (param: string, values: string[]) => {
+  const setParam = (param: string, values: string[], notArray?: boolean) => {
     if (values.length > 0) {
-      searchParams.set(param, values.join(','))
+      searchParams.set(param, notArray ? (values as unknown as string) : values.join(','))
     } else {
       searchParams.delete(param)
     }
