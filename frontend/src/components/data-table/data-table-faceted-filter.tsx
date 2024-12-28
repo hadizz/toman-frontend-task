@@ -42,6 +42,8 @@ export function DataTableFacetedFilter<TData>({
     return null
   }
 
+  // @ts-expect-error not defined in the table state types
+  const loading = table.getState().isLoading
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -69,6 +71,7 @@ export function DataTableFacetedFilter<TData>({
                 return (
                   <CommandItem
                     key={option.value}
+                    disabled={loading}
                     onSelect={() => {
                       const newValues = new Set(selectedValues)
                       if (isSelected) {
@@ -99,6 +102,7 @@ export function DataTableFacetedFilter<TData>({
                 <CommandSeparator />
                 <CommandGroup>
                   <CommandItem
+                    disabled={loading}
                     onSelect={() => column.setFilterValue(undefined)}
                     className="justify-center text-center"
                   >

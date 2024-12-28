@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useMemo } from 'react'
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -9,8 +9,10 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  OnChangeFn,
   useReactTable,
 } from '@tanstack/react-table'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -19,13 +21,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import useColumnFilterSearchParams from '@/hooks/useUrlParams'
 import { DataTablePagination } from './data-table-pagination'
 import { DataTableToolbar } from './data-table-toolbar'
 
 interface DataTableProps<TData, TValue> {
+  loading: boolean
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  columnFilters: ColumnFiltersState
+  pagination: { pageIndex: number; pageSize: number }
+  pageCount: number
+  onColumnFiltersChange: OnChangeFn<ColumnFiltersState>
+  onPaginationChange: OnChangeFn<{ pageIndex: number; pageSize: number }>
   filterableColumns?: {
     id: string
     title: string
@@ -40,82 +47,47 @@ interface DataTableProps<TData, TValue> {
   }[]
 }
 
+const defaultPagination = { pageIndex: 0, pageSize: 10 }
+
 export function DataTable<TData, TValue>({
+  loading,
   columns,
   data,
+  columnFilters,
+  pagination,
+  pageCount,
+  onColumnFiltersChange,
+  onPaginationChange,
   filterableColumns = [],
   searchableColumns = [],
 }: DataTableProps<TData, TValue>) {
-  console.log('render table')
-  const { getParamValues, setParam, searchParams, setSearchParams } = useColumnFilterSearchParams()
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [pagination, setPagination] = useState({
-    pageIndex: 0,
-    pageSize: 10,
-  })
-
-  useEffect(() => {
-    console.log('--------------------------------component mounted')
-
-    // Filters
-    const initialFilters = filterableColumns
-      .map(({ id }) => {
-        const urlValues = getParamValues(id)
-        return urlValues.length > 0
-          ? {
-              id,
-              value: urlValues,
-            }
-          : null
-      })
-      .filter(Boolean) as ColumnFiltersState
-
-    if (initialFilters.length > 0) {
-      setColumnFilters(initialFilters)
-    }
-
-    // Pagination
-    const pageIndexParam = searchParams.get('pageIndex')
-    const pageSizeParam = searchParams.get('pageSize')
-    console.log('pageIndexParam', pageIndexParam)
-    console.log('pageSizeParam', pageSizeParam)
-
-    if (pageIndexParam && pageSizeParam) {
-      setPagination({
-        pageIndex: parseInt(pageIndexParam, 10),
-        pageSize: parseInt(pageSizeParam, 10),
-      })
-    } else {
-      searchParams.set('pageIndex', pagination.pageIndex.toString())
-      searchParams.set('pageSize', pagination.pageSize.toString())
-      setSearchParams(searchParams)
-    }
-    // I didnt have search filters in the url params, so I dont code it now :_)
-  }, [])
+  console.log('loading table', loading)
+  const dataToRender = useMemo(
+    () => (loading ? Array(pagination.pageSize ?? defaultPagination.pageSize).fill({}) : data),
+    [loading, data, pagination.pageSize]
+  )
+  const columnsToRender = useMemo(
+    () =>
+      loading
+        ? columns.map((column) => ({
+            ...column,
+            cell: () => <Skeleton className="h-4 w-full" />,
+          }))
+        : columns,
+    [loading, columns]
+  )
 
   const table = useReactTable({
-    data,
-    columns,
+    data: dataToRender,
+    columns: columnsToRender,
+    pageCount,
     state: {
       columnFilters,
       pagination,
     },
-    onColumnFiltersChange: (updater) => {
-      const changedFilters = typeof updater === 'function' ? updater(columnFilters) : updater
-      setColumnFilters(changedFilters)
-      changedFilters.map((filterColumn) => {
-        setParam(filterColumn.id, filterColumn.value as any)
-      })
-    },
-    onPaginationChange: (updater) => {
-      const newPagination = typeof updater === 'function' ? updater(pagination) : updater
-      console.log('newPagination', newPagination)
-
-      setPagination(newPagination)
-      searchParams.set('pageIndex', newPagination.pageIndex.toString())
-      searchParams.set('pageSize', newPagination.pageSize.toString())
-      setSearchParams(searchParams)
-    },
+    manualPagination: true,
+    onColumnFiltersChange,
+    onPaginationChange,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -127,6 +99,7 @@ export function DataTable<TData, TValue>({
   return (
     <div className="flex w-full flex-col gap-4">
       <DataTableToolbar<TData>
+        loading={loading}
         table={table}
         filterableColumns={filterableColumns}
         searchableColumns={searchableColumns}
@@ -169,7 +142,7 @@ export function DataTable<TData, TValue>({
           </Table>
         </div>
       </div>
-      <DataTablePagination table={table} />
+      <DataTablePagination loading={loading} table={table} />
     </div>
   )
 }

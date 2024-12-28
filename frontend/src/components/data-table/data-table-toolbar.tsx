@@ -5,6 +5,7 @@ import { Input } from '../ui/input'
 import { DataTableFacetedFilter } from './data-table-faceted-filter'
 
 interface DataTableToolbarProps<TData> {
+  loading: boolean
   table: Table<TData>
   filterableColumns?: {
     id: string
@@ -21,6 +22,7 @@ interface DataTableToolbarProps<TData> {
 }
 
 export function DataTableToolbar<TData>({
+  loading,
   table,
   filterableColumns = [],
   searchableColumns = [],
@@ -30,6 +32,7 @@ export function DataTableToolbar<TData>({
   const handleReset = () => {
     window.history.pushState({}, '', window.location.pathname)
     table.resetColumnFilters()
+    table.setPagination({ pageIndex: 0, pageSize: 10 })
   }
 
   return (
@@ -59,7 +62,12 @@ export function DataTableToolbar<TData>({
             />
           ))}
         {isFiltered && (
-          <Button variant="ghost" onClick={handleReset} className="h-8 px-2 lg:px-3">
+          <Button
+            variant="ghost"
+            disabled={loading}
+            onClick={handleReset}
+            className="h-8 px-2 lg:px-3"
+          >
             Reset all
             <X className="ml-2 h-4 w-4" />
           </Button>
